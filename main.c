@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     }
     // Remap image 1D array into a 2D array
     input_image = (unsigned char **)malloc(sizeof(unsigned char *) * height);
-    
+
     for (int i = 0; i < height; i++)
     {
         // assign each row the proper pixel offset
@@ -65,10 +65,9 @@ int main(int argc, char *argv[])
     // Start clocking!
     double startTime, endTime;
     startTime = rtclock();
-    filter();
-    // TODO - Prepare and create threads
 
-    // TODO - Wait for threads to finish
+    // All threads are created and handled by this single function call 
+    filter();
 
     // End clocking!
     endTime = rtclock();
@@ -83,20 +82,19 @@ int main(int argc, char *argv[])
             array1D[i * width + j] = output_image[i][j];
         }
     }
-    
+
     char *newFilename = get_output_filename(filename);
-   
+
     // Save the file!
     stbi_write_jpg(newFilename, width, height, 1, array1D, 80);
 
-    // TODO - Free allocated memory
+    // Free allocated memory
 
     free(input_image);
     input_image = NULL; // dangling pointer
 
     free(array1D);
     array1D = NULL; // dangling pointer
-
 
     for (int i = 0; i < height; i++)
     {
@@ -106,7 +104,6 @@ int main(int argc, char *argv[])
     free(output_image);
     output_image = NULL; // dangling pointer
 
- 
     free(newFilename);
     stbi_image_free(data);
 

@@ -4,34 +4,61 @@
 #include "sobel.h"
 #include <string.h>
 
-// TODO - write your pthread-ready sobel filter function here for a range of rows
 
-// Note: You have access to all the global variables here.
-
-void filter()
+void *thread_funct(void *arg)
 {
-    output_image = (unsigned char **)malloc(sizeof(unsigned char *) * height);
-    for (int i = 0; i < height; i++)
-    {
-        output_image[i] = (unsigned char *)malloc(width * sizeof(unsigned char));
-    }
-    
-    // For each pixel:
-    for (int i = 0; i < height; i++)
+    thread_args *work = (thread_args *)arg;
+    int start = work->start_row;
+    int end = work->end_row;
+
+    for (int i = start; i < end; i++) // Process assigned rows
     {
         for (int j = 0; j < width; j++)
         {
-            // Determine if it's an edge, if so set g to 0 and move on
-            if (i == 0 || i == height - 1 || j == 0 || j == width - 1)
+            if (i == 0 || i == height - 1 || j == 0 || j == width - 1) // Check if we have an edge pixel
             {
                 output_image[i][j] = 0;
             }
             else
             {
-                output_image[i][j] = calculate_gradient(input_image[i][j], i, j); // Calculate gradient
+                output_image[i][j] = calculate_gradient(input_image[i][j], i, j);
             }
         }
     }
+    return NULL;
+}
+
+void filter()
+{
+    pthread_t *threads;
+    thread_args *thread_work;
+
+    output_image = (unsigned char **)malloc(sizeof(unsigned char *) * height);
+    for (int i = 0; i < height; i++)
+    {
+        output_image[i] = (unsigned char *)malloc(width * sizeof(unsigned char));
+    }
+
+    threads = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
+    thread_work = (thread_args *)malloc(num_threads * sizeof(thread_args));
+
+    int rows_per_thread = height / num_threads;
+
+    for (int i = 0; i < num_threads; i++)
+    {
+        thread_work[i].start_row = i * rows_per_thread;
+        // Last thread may need to handle remaining rows if we have an odd number
+        thread_work[i].end_row = (i == num_threads - 1) ? height : (i + 1) * rows_per_thread;
+        pthread_create(&threads[i], NULL, thread_funct, (void *)&thread_work[i]); // Create threads with their specified work
+    }
+
+    for (int i = 0; i < num_threads; i++)
+    {
+        pthread_join(threads[i], NULL);
+    }
+
+    free(threads);
+    free(thread_work);
 }
 
 unsigned char calculate_gradient(unsigned char pixel, int xCoord, int yCoord)
@@ -69,27 +96,25 @@ unsigned char calculate_gradient(unsigned char pixel, int xCoord, int yCoord)
     }
 
     gradient = sqrt(pow(horizontal, 2) + pow(vertical, 2));
-    if (gradient < threshold) { // Set pixels below the threshold to 0
-        gradient = 0; 
+    if (gradient < threshold)
+    { // Set pixels below the threshold to 0
+        gradient = 0;
     }
 
     return gradient;
 }
 
-char *get_output_filename(const char *input_filename) {
-
+char *get_output_filename(const char *input_filename)
+{
     const char *dot = strrchr(input_filename, '.');
-    
     size_t basename_length = dot - input_filename;
     size_t extension_length = strlen(dot); // Includes the dot
-    
+
     char *output_filename = malloc(basename_length + 6 + extension_length + 1);
-    
-    // Copy the base name portion
+
     strncpy(output_filename, input_filename, basename_length);
-    
     strcpy(output_filename + basename_length, "-sobel");
-    strcpy(output_filename + basename_length + 6, dot);
-    
+    strcpy(output_filename + basename_length + 6, dot); // Did this just incase we have a .png instead of a .jpg
+
     return output_filename;
 }
