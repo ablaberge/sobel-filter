@@ -15,3 +15,4 @@ extern int Ky[3][3];
 // Function declarations - TODO
 void filter();
 unsigned char calculate_gradient(unsigned char pixel, int xCoord, int yCoord);
+char *get_output_filename(const char *input_filename);
