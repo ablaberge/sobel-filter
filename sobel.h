@@ -13,3 +13,5 @@ extern int Ky[3][3];
 // Thread function argument - TODO
 
 // Function declarations - TODO
+void filter();
+unsigned char calculate_gradient(unsigned char pixel, int xCoord, int yCoord);
