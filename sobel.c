@@ -100,6 +100,9 @@ unsigned char calculate_gradient(unsigned char pixel, int xCoord, int yCoord)
     { // Set pixels below the threshold to 0
         gradient = 0;
     }
+    else if (gradient > 255){ // Clamp gradient at 255
+        gradient = 255; 
+    }
 
     return gradient;
 }
